@@ -4,7 +4,41 @@ import requests
 from bs4 import BeautifulSoup
 from slackbot.bot import respond_to
 from slackbot.utils import download_file, create_tmp_file
+import twitter_config, twitter
 _dir = os.path.dirname(os.path.realpath(__file__))
+cred = next(a for a in twitter_config.accounts if a['username']=='BoostedThat4ya')
+targetfile = '/home/pi/git/boostguy/target.txt'
+
+@respond_to(r'signalboost (.*)', re.IGNORECASE)
+def signalboost(message, text):
+    new_target = text.split(' ')[0]
+    f = open(targetfile, 'w')
+    f.write(new_target)
+    f.close()
+    new_target = open(targetfile, 'r').read()
+    message.reply('Now boosting ' + new_target)
+    #with open(targetfile, 'w') as file:
+    #    file.write(new_target)
+    #message.reply('Now boosting ' + new_target
+    #try:
+    #    with open('/home/pi/git/boostguy/target.txt', 'w') as file:
+    #        file.write(text)
+    #except:
+    #    message.reply('Had some kind of shitty problem doing that.')
+    #target = open('/home/pi/git/boostguy/target.txt', 'r').read()
+    #message.reply('Now signal boosting ' + target
+    
+
+@respond_to(r'tweet (.*)', re.IGNORECASE)
+def boostguy_to_tweet(message, text):
+    try:
+        api = twitter.Api(consumer_key=cred['consumer_key'], consumer_secret=cred['consumer_secret'],
+                          access_token_key=cred['access_token_key'], access_token_secret=cred['access_token_secret'])
+    except:
+        message.reply('Unable to connect to twitter')
+    r = api.PostUpdate(text)
+    r = r.AsDict()
+    message.reply('https://twitter.com/BoostedThat4ya/status/{0}'.format(r['id']))
 
 
 @respond_to(r'youtube (.*)', re.IGNORECASE)
@@ -71,7 +105,7 @@ def dock_bucks(message, owner, count, unit):
     message.reply('docking {0} {1} {2}'.format(owner, count, unit))
     message.reply('{0} now has {1} {2}'.format(owner, ledger[owner][unit], unit))
 
-"""
+
 @respond_to(r'upload \<?(.*)\>?')
 def upload(message, url):
     url = url.lstrip('<').rstrip('>')
@@ -83,4 +117,4 @@ def upload(message, url):
             message.channel.upload_file(fname, tmpf, 'downloaded from {}'.format(url))
     elif url.startswith('/'):
         message.channel.upload_file(fname, url)
-"""
+
